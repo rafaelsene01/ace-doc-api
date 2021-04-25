@@ -1,11 +1,14 @@
 import { Router } from "express";
 
-// const HomeController = require("./controller/HomeController");
+const TextController = require("./controllers/TextController");
 
 const routes = new Router();
 
-// routes.get("/", HomeController.getText);
-// routes.get("/:_id", HomeController.getText);
+routes.get("/", (req, res) => {
+  return res.json("Ace_Doc On");
+});
+routes.get("/:_id", TextController.getText);
+routes.patch("/:_id", TextController.updateText);
 // routes.post("/", HomeController.postText);
 // routes.post("/:_id", HomeController.postText);
 

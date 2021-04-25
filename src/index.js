@@ -8,11 +8,17 @@ import "express-async-errors";
 
 import routes from "./routes";
 
-// import "./database";
+import mongoose from "mongoose";
+mongoose.connect(process.env.MONGO_URL, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
 class App {
   constructor() {
-    this.server = express();
+    this.app = express();
+    this.server = require("http").Server(this.app);
+    this.io = require("socket.io")(this.server);
 
     this.middlawares();
     this.routes();
@@ -20,16 +26,21 @@ class App {
   }
 
   middlawares() {
-    this.server.use(cors()); // cors({ origin: 'http://rafaelsene.com' })
-    this.server.use(express.json());
+    this.app.use((req, res, next) => {
+      req.io = this.io;
+
+      next();
+    });
+    this.app.use(cors()); // cors({ origin: 'http://rafaelsene.com' })
+    this.app.use(express.json());
   }
 
   routes() {
-    this.server.use(routes);
+    this.app.use(routes);
   }
 
   exceptionHandler() {
-    this.server.use(async (err, req, res, next) => {
+    this.app.use(async (err, req, res, next) => {
       if (process.env.NODE_ENV === "development") {
         const error = await new Youch(err, req).toJSON();
 
