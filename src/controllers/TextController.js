@@ -6,6 +6,12 @@ module.exports = {
       _id: req?.params?._id.trim(),
     };
 
+    if (!/^[a-zA-Z0-9]+$/.test(data._id)) {
+      return res.status(400).send({
+        message: "Formato do ID inválido, aceitamos somente letras e números.",
+      });
+    }
+
     try {
       const obj = await Text.findOne({ _id: data._id });
       if (!obj) {
