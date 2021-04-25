@@ -13,6 +13,6 @@ function normalizaPort(val) {
   return false;
 }
 
-app.listen(port, "0.0.0.0", () => {
+app.listen(port, () => {
   console.log(`app listening on http://localhost:${port}`);
 });
