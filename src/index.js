@@ -20,22 +20,6 @@ class App {
     this.server = require("http").Server(this.app);
     this.io = require("socket.io")(this.server);
 
-    io.on("connection", function (socket) {
-      const { doc } = socket.handshake.query;
-      io.emit("clientsCount", io.engine.clientsCount);
-
-      socket.join(doc);
-
-      socket.on("text", (msg) => {
-        io.to(doc).emit("text", { id: socket.id, msg });
-      });
-
-      socket.on("disconnect", () => {
-        socket.leave(doc);
-        io.emit("clientsCount", io.engine.clientsCount);
-      });
-    });
-
     this.middlawares();
     this.routes();
     this.exceptionHandler();
@@ -52,6 +36,22 @@ class App {
   }
 
   routes() {
+    io.on("connection", function (socket) {
+      const { doc } = socket.handshake.query;
+      io.emit("clientsCount", io.engine.clientsCount);
+
+      socket.join(doc);
+
+      socket.on("text", (msg) => {
+        io.to(doc).emit("text", { id: socket.id, msg });
+      });
+
+      socket.on("disconnect", () => {
+        socket.leave(doc);
+        io.emit("clientsCount", io.engine.clientsCount);
+      });
+    });
+
     this.app.use(routes);
   }
 
