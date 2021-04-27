@@ -32,7 +32,6 @@ module.exports = {
     try {
       await Text.update({ _id: data._id }, data, { upsert: true });
 
-      req.io.emit(data._id, data);
       return res.status(204).send();
     } catch (err) {
       return res.status(500).send({ message: err });
