@@ -17,8 +17,13 @@ mongoose.connect(process.env.MONGO_URL, {
 class App {
   constructor() {
     this.app = express();
+
     this.server = require("http").Server(this.app);
-    this.io = require("socket.io")(this.server);
+    this.io = require("socket.io")(this.server, {
+      cors: {
+        origin: process.env.URL_WEB ? process.env.URL_WEB : "*",
+      },
+    });
 
     this.middlawares();
     this.routes();
@@ -26,33 +31,41 @@ class App {
   }
 
   middlawares() {
+    this.app.use(
+      cors({ origin: process.env.URL_WEB ? process.env.URL_WEB : "*" })
+    ); // cors({ origin: 'http://rafaelsene.com' })
+    this.app.use(express.json());
+
     this.app.use((req, res, next) => {
       req.io = this.io;
 
       next();
     });
-    this.app.use(cors()); // cors({ origin: 'http://rafaelsene.com' })
-    this.app.use(express.json());
   }
 
   routes() {
-    io.on("connection", function (socket) {
+    this.app.use(routes);
+
+    this.io.on("connection", (socket) => {
       const { doc } = socket.handshake.query;
-      io.emit("clientsCount", io.engine.clientsCount);
+
+      socket.broadcast.emit("clientsCount", socket.server.engine.clientsCount);
+      socket.emit("clientsCount", socket.server.engine.clientsCount);
 
       socket.join(doc);
 
       socket.on("text", (msg) => {
-        io.to(doc).emit("text", { id: socket.id, msg });
+        socket.to(doc).emit("text", { id: socket.id, msg });
       });
 
       socket.on("disconnect", () => {
         socket.leave(doc);
-        io.emit("clientsCount", io.engine.clientsCount);
+        socket.broadcast.emit(
+          "clientsCount",
+          socket.server.engine.clientsCount
+        );
       });
     });
-
-    this.app.use(routes);
   }
 
   exceptionHandler() {
