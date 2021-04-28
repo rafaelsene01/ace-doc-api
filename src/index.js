@@ -14,16 +14,31 @@ mongoose.connect(process.env.MONGO_URL, {
   useUnifiedTopology: true,
 });
 
+function stringToHash(string) {
+  let hash = 0;
+
+  if (string.length == 0) return hash;
+
+  for (let i = 0; i < string.length; i++) {
+    let char = string.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash;
+  }
+
+  return hash;
+}
+
 class App {
   constructor() {
     this.app = express();
-
     this.server = require("http").Server(this.app);
     this.io = require("socket.io")(this.server, {
       cors: {
         origin: process.env.URL_WEB ? process.env.URL_WEB : "*",
       },
     });
+
+    this.users = new Array();
 
     this.middlawares();
     this.routes();
@@ -47,19 +62,39 @@ class App {
     this.app.use(routes);
 
     this.io.on("connection", (socket) => {
-      const { doc } = socket.handshake.query;
+      const { room } = socket.handshake.query;
 
       socket.broadcast.emit("clientsCount", socket.server.engine.clientsCount);
       socket.emit("clientsCount", socket.server.engine.clientsCount);
 
-      socket.join(doc);
+      socket.join(room);
+
+      const data = {
+        name: `user_${stringToHash(socket.id.slice(0, 3))}`,
+        id: socket.id,
+        room,
+      };
+      this.users.push(data);
+      socket.to(room).emit(
+        "UserInfo",
+        this.users.filter((item) => item.room === room)
+      );
+      socket.emit(
+        "UserInfo",
+        this.users.filter((item) => item.room === room)
+      );
 
       socket.on("text", (msg) => {
-        socket.to(doc).emit("text", { id: socket.id, msg });
+        socket.to(room).emit("text", { id: socket.id, msg });
       });
 
       socket.on("disconnect", () => {
-        socket.leave(doc);
+        this.users = this.users.filter((item) => item.id !== socket.id);
+        socket.to(room).emit(
+          "UserInfo",
+          this.users.filter((item) => item.room === room)
+        );
+        socket.leave(room);
         socket.broadcast.emit(
           "clientsCount",
           socket.server.engine.clientsCount
