@@ -28,14 +28,33 @@ function stringToHash(string) {
   return hash;
 }
 
+const whitelist = [
+  "https://livetext.app",
+  "https://www.livetext.app",
+  "https://ace-doc.vercel.app",
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (whitelist.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+};
+
 class App {
   constructor() {
     this.app = express();
     this.server = require("http").Server(this.app);
     this.io = require("socket.io")(this.server, {
-      cors: {
-        origin: process.env.URL_WEB ? process.env.URL_WEB : "*",
-      },
+      cors:
+        process.env.NODE_ENV === "Production"
+          ? corsOptions
+          : {
+              origin: "*",
+            },
     });
 
     this.users = new Array();
@@ -47,8 +66,14 @@ class App {
 
   middlawares() {
     this.app.use(
-      cors({ origin: process.env.URL_WEB ? process.env.URL_WEB : "*" })
-    ); // cors({ origin: 'http://rafaelsene.com' })
+      cors(
+        process.env.NODE_ENV === "Production"
+          ? corsOptions
+          : {
+              origin: "*",
+            }
+      )
+    );
     this.app.use(express.json());
 
     this.app.use((req, res, next) => {
