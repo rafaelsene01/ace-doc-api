@@ -109,15 +109,11 @@ class App {
 
       socket.to(room).emit(
         "UserInfo",
-        this.users.filter(
-          (item) => item.room === room && item.origin === origin
-        )
+        this.users.filter((item) => item.room === room)
       );
       socket.emit(
         "UserInfo",
-        this.users.filter(
-          (item) => item.room === room && item.origin === origin
-        )
+        this.users.filter((item) => item.room === room)
       );
 
       socket.on("text", (msg) => {
