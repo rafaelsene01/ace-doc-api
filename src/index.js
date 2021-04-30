@@ -14,19 +14,19 @@ mongoose.connect(process.env.MONGO_URL, {
   useUnifiedTopology: true,
 });
 
-function stringToHash(string) {
-  let hash = 0;
+// function stringToHash(string) {
+//   let hash = 0;
 
-  if (string.length == 0) return hash;
+//   if (string.length == 0) return hash;
 
-  for (let i = 0; i < string.length; i++) {
-    let char = string.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash;
-  }
+//   for (let i = 0; i < string.length; i++) {
+//     let char = string.charCodeAt(i);
+//     hash = (hash << 5) - hash + char;
+//     hash = hash & hash;
+//   }
 
-  return hash;
-}
+//   return hash;
+// }
 
 const whitelist = [
   "https://livetext.app",
@@ -92,14 +92,18 @@ class App {
       socket.broadcast.emit("clientsCount", socket.server.engine.clientsCount);
       socket.emit("clientsCount", socket.server.engine.clientsCount);
 
-      socket.join(room);
+      if (room) {
+        socket.join(room);
+      }
 
       const data = {
-        name: `user_${stringToHash(socket.id.slice(0, 3))}`,
+        name: `user_${socket.id.slice(0, 6)}`,
         id: socket.id,
         room,
         leader:
           this.users.filter((item) => item.room === room) <= 1 ? true : false,
+        icon: socket.id.slice(0, 6),
+        origin: socket.handshake.headers.origin,
       };
 
       this.users.push(data);
