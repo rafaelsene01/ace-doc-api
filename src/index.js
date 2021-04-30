@@ -96,7 +96,6 @@ class App {
         socket.join(room);
       }
 
-      const origin = socket.handshake.headers.origin.replace("www.", "");
       const data = {
         name: `user_${socket.id.slice(0, 6)}`,
         id: socket.id,
@@ -104,7 +103,6 @@ class App {
         leader:
           this.users.filter((item) => item.room === room) <= 1 ? true : false,
         icon: socket.id.slice(0, 6),
-        origin,
       };
 
       this.users.push(data);
