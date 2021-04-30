@@ -98,8 +98,12 @@ class App {
         name: `user_${stringToHash(socket.id.slice(0, 3))}`,
         id: socket.id,
         room,
+        leader:
+          this.users.filter((item) => item.room === room) <= 1 ? true : false,
       };
+
       this.users.push(data);
+
       socket.to(room).emit(
         "UserInfo",
         this.users.filter((item) => item.room === room)
@@ -110,7 +114,10 @@ class App {
       );
 
       socket.on("text", (msg) => {
-        socket.to(room).emit("text", { id: socket.id, msg });
+        const user = this.users.find((item) => item.id === socket.id);
+        if (user && user.leader) {
+          socket.to(room).emit("text", { id: socket.id, msg });
+        }
       });
 
       socket.on("disconnect", () => {
