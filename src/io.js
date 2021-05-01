@@ -12,7 +12,7 @@
 //   return hash;
 // }
 
-const users = new Array();
+let users = new Array();
 
 class IO {
   constructor(io) {
