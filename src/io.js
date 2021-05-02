@@ -30,7 +30,10 @@ class IO {
         name: `user_${socket.id.slice(0, 6)}`,
         id: socket.id,
         room,
-        leader: users.filter((item) => item.room === room) <= 1 ? true : false,
+        leader:
+          users.filter((item) => item.room === room && item.leader).length === 0
+            ? true
+            : false,
         icon: socket.id.slice(0, 6),
       };
 
