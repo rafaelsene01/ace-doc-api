@@ -27,7 +27,7 @@ class IO {
       }
 
       const data = {
-        name: `user_${socket.id.slice(0, 6)}`,
+        name: `user_${socket.id.replace(/[_-]/g, "").slice(0, 6)}`,
         id: socket.id,
         room,
         leader:
