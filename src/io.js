@@ -11,6 +11,10 @@
 
 //   return hash;
 // }
+const Crypt = require("g-crypt");
+const passphrase =
+  "f5d9973e189088c4add2faa9a47fd004b76a344f2f98764c97ce11e395128666";
+const crypter = Crypt(passphrase);
 
 let users = new Array();
 
@@ -19,8 +23,14 @@ class IO {
     io.on("connection", (socket) => {
       const { room } = socket.handshake.query;
 
-      socket.broadcast.emit("clientsCount", socket.server.engine.clientsCount);
-      socket.emit("clientsCount", socket.server.engine.clientsCount);
+      socket.broadcast.emit(
+        "clientsCount",
+        crypter.encrypt(socket.server.engine.clientsCount)
+      );
+      socket.emit(
+        "clientsCount",
+        crypter.encrypt(socket.server.engine.clientsCount)
+      );
 
       if (room) {
         socket.join(room);
@@ -39,19 +49,26 @@ class IO {
 
       users.push(data);
 
-      socket.to(room).emit(
-        "UserInfo",
-        users.filter((item) => item.room === room)
-      );
+      socket
+        .to(room)
+        .emit(
+          "UserInfo",
+          crypter.encrypt(users.filter((item) => item.room === room))
+        );
       socket.emit(
         "UserInfo",
-        users.filter((item) => item.room === room)
+        crypter.encrypt(users.filter((item) => item.room === room))
       );
 
       socket.on("text", (msg) => {
         const user = users.find((item) => item.id === socket.id);
         if (user && user.leader) {
-          socket.to(room).emit("text", { id: socket.id, msg });
+          socket
+            .to(room)
+            .emit(
+              "text",
+              crypter.encrypt({ id: socket.id, msg: crypter.decrypt(msg) })
+            );
         }
       });
 
@@ -66,14 +83,16 @@ class IO {
             return item;
           });
         }
-        socket.to(room).emit(
-          "UserInfo",
-          users.filter((item) => item.room === room)
-        );
+        socket
+          .to(room)
+          .emit(
+            "UserInfo",
+            crypter.encrypt(users.filter((item) => item.room === room))
+          );
         socket.leave(room);
         socket.broadcast.emit(
           "clientsCount",
-          socket.server.engine.clientsCount
+          crypter.encrypt(socket.server.engine.clientsCount)
         );
       });
     });
