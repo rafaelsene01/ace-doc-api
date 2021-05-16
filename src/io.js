@@ -72,6 +72,16 @@ class IO {
         }
       });
 
+      socket.on("message", (text) => {
+        const message = crypter.decrypt(text);
+        if (!message) {
+          return;
+        }
+        socket
+          .to(room)
+          .emit("message", crypter.encrypt({ id: socket.id, text: message }));
+      });
+
       socket.on("disconnect", () => {
         const user = users.find((item) => item.id === socket.id);
         users = users.filter((item) => item.id !== socket.id);
@@ -83,12 +93,7 @@ class IO {
             return item;
           });
         }
-        socket
-          .to(room)
-          .emit(
-            "UserInfo",
-            crypter.encrypt(users.filter((item) => item.room === room))
-          );
+        socket.to(room).emit("userDisconnect", crypter.encrypt(socket.id));
         socket.leave(room);
         socket.broadcast.emit(
           "clientsCount",
